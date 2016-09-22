@@ -1,5 +1,3 @@
-library(MASS)
-
 ## Filter functions
 
 #' Find rows of a dataframe where any of the values
