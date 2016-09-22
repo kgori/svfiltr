@@ -92,18 +92,19 @@ estimate_boundaries <- function(df, index) {
     boundaries
 }
 
-# Filter data frame so all samples selected by `index` have read support
-# greater than the boundary threshold, or 0
-apply_boundaries <- function(df, boundaries, index, bound.adjust = NULL) {
-    if (is.null(bound.adjust))
-        bound.adjust <- 1
-    if (!is.numeric(bound.adjust)) {
-        print("bound.adjust is not numeric")
-        return
-    }
+
+#' Filter data frame so all samples selected by `index` have read support
+#' greater than the boundary threshold, or 0
+#' @param df A dataframe
+#' @param boundaries Estimated boundaries from estimated_boundaries
+#' @param index Columns of df to examine
+#' @return Filtered dataframe
+#' @importFrom "stats" kmeans
+apply_boundaries <- function(df, boundaries, index) {
     df[rowSums(df[, index] > unlist(boundaries) | df[, index] == 0) == length(index), ]
 }
 
+#' @importFrom "graphics" abline par text
 plot_hists <- function(df, index, mfrow = c(3, 4), boundaries = NULL, ...) {
     names <- colnames(df)[index]
     par(mfrow = mfrow)

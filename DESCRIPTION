@@ -4,8 +4,7 @@ Title: Filter BRASS Structural Variants
 Version: 0.0.0.9000
 Author: Kevin Gori
 Maintainer: Kevin Gori <kcg25@cam.ac.uk>
-Description: Find tumour specific structural variants from a panel of matched
-    tumour-host samples
+Description: Find tumour specific structural variants from a panel of matched tumour-host samples.
 License: MIT + file LICENSE
 LazyData: TRUE
 Imports:
