@@ -2,8 +2,7 @@
 
 #' @export
 #' @importFrom "utils" read.table
-annotate.genes <- function(x, genes_file){
-
+annotate_genes <- function(x, genes_file){
     # 1. Load file with gene annotations
     genes <- read.table(genes_file, header = T, sep = "\t", comment.char = "")
     genes[, 3] <- gsub("chrM", "MT", genes[, 3])

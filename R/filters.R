@@ -137,8 +137,7 @@ plot_hists <- function(df, index, mfrow = c(3, 4), boundaries = NULL, ...) {
 
 # Remove structural variants that self overlap
 #' @export
-self.overlap <- function(df){
-
+self_overlap <- function(df) {
     # 1. Make Granges objects of left and right
     input_left_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 1]),
                                                 ranges = IRanges::IRanges(start = as.integer(df[, 3]),
