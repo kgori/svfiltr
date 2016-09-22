@@ -5,7 +5,7 @@
 #' @param df A (numeric) dataframe.
 #' @param threshold A number.
 #' @return TRUE or FALSE.
-#'
+#' @export
 any_greater_than <- function(df, threshold) {
     apply(df, 1, function(x) any(x > threshold))
 }
@@ -15,7 +15,7 @@ any_greater_than <- function(df, threshold) {
 #' @param df A (numeric) dataframe.
 #' @param threshold A number.
 #' @return TRUE or FALSE.
-#'
+#' @export
 any_less_than <- function(df, threshold) {
     apply(df, 1, function(x) any(x < threshold))
 }
@@ -25,7 +25,7 @@ any_less_than <- function(df, threshold) {
 #' @param df A (numeric) dataframe.
 #' @param threshold A number.
 #' @return TRUE or FALSE.
-#'
+#' @export
 all_greater_than <- function(df, threshold) {
     apply(df, 1, function(x) all(x > threshold))
 }
@@ -35,7 +35,7 @@ all_greater_than <- function(df, threshold) {
 #' @param df A (numeric) dataframe.
 #' @param threshold A number.
 #' @return TRUE or FALSE.
-#'
+#' @export
 all_less_than <- function(df, threshold) {
     apply(df, 1, function(x) all(x < threshold))
 }
@@ -45,7 +45,7 @@ all_less_than <- function(df, threshold) {
 #' @param df A (numeric) dataframe.
 #' @param threshold A number.
 #' @return TRUE or FALSE.
-#'
+#' @export
 one_greater_than <- function(df, threshold) {
     apply(df, 1, function(x) sum(x > threshold) == 1)
 }
@@ -55,7 +55,7 @@ one_greater_than <- function(df, threshold) {
 #' @param df A (numeric) dataframe.
 #' @param threshold A number.
 #' @return TRUE or FALSE.
-#'
+#' @export
 one_less_than <- function(df, threshold) {
     apply(df, 1, function(x) sum(x < threshold) == 1)
 }
@@ -65,7 +65,7 @@ one_less_than <- function(df, threshold) {
 #' @param df A dataframe.
 #' @param index The columns of the dataframe to operate on.
 #' @return TRUE or FALSE.
-#'
+#' @export
 estimate_boundaries <- function(df, index) {
     names <- colnames(df)[index]
     boundaries <- list()
@@ -100,11 +100,13 @@ estimate_boundaries <- function(df, index) {
 #' @param index Columns of df to examine
 #' @return Filtered dataframe
 #' @importFrom "stats" kmeans
+#' @export
 apply_boundaries <- function(df, boundaries, index) {
     df[rowSums(df[, index] > unlist(boundaries) | df[, index] == 0) == length(index), ]
 }
 
 #' @importFrom "graphics" abline par text
+#' @export
 plot_hists <- function(df, index, mfrow = c(3, 4), boundaries = NULL, ...) {
     names <- colnames(df)[index]
     par(mfrow = mfrow)
