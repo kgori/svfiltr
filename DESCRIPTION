@@ -8,5 +8,11 @@ Description: Find tumour specific structural variants from a panel of matched tu
 License: MIT + file LICENSE
 LazyData: TRUE
 Imports:
-    MASS
+    GenomicRanges,
+    IRanges,
+    MASS,
+    readr,
+    S4Vectors,
+    stringi,
+    stringr
 RoxygenNote: 5.0.1

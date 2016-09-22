@@ -134,3 +134,60 @@ plot_hists <- function(df, index, mfrow = c(3, 4), boundaries = NULL, ...) {
         }
     }
 }
+
+# Remove structural variants that self overlap
+#' @export
+self.overlap <- function(df){
+
+    # 1. Make Granges objects of left and right
+    input_left_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 1]),
+                                                ranges = IRanges::IRanges(start = as.integer(df[, 3]),
+                                                                          end = as.integer(df[, 4])))
+
+    input_right_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 5]),
+                                                 ranges = IRanges::IRanges(start = as.integer(df[, 7]),
+                                                                           end = as.integer(df[, 8])))
+
+    # 2. Pairwise overlap-testing
+    df <- df[IRanges::`%outside%`(input_left_ranges, input_right_ranges), ]
+
+    # 3. Output
+    return(df)
+}
+
+#' @export
+#' @importFrom "utils" read.table
+simple_repeats <- function(df, repeat_file){
+    repeats <- read.table(repeat_file, header = F)
+
+    # 1. Left Breakpoint
+    input_left_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 1]),
+                                                ranges = IRanges::IRanges(start = as.integer(df[, 3]),
+                                                                          end = as.integer(df[, 4])))
+
+    repeat_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(repeats[, 1]),
+                                            ranges = IRanges::IRanges(start = as.integer(repeats[, 2]),
+                                                                      end = as.integer(repeats[, 3])))
+
+    # 2. Match with positions in Input
+    overlaps_left <- IRanges::findOverlaps(input_left_ranges, repeat_ranges)
+    overlaps_left <- as.matrix(overlaps_left)
+    colnames(overlaps_left) <- c("Sets", "Repeats")
+
+    # 3. Right Breakpoint
+    input_right_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 5]),
+                                                 ranges = IRanges::IRanges(start = as.integer(df[, 7]),
+                                                                           end = as.integer(df[, 8])))
+
+    # 4. Match with positions in Input
+    overlaps_right <- IRanges::findOverlaps(input_right_ranges, repeat_ranges)
+    overlaps_right <- as.matrix(overlaps_right)
+    colnames(overlaps_right) <- c("Sets", "Repeats")
+
+    # 5. Remove the ones which match
+    cat("\n Total removed: ", round(length(unique(c(overlaps_left[, 1], overlaps_right[, 1]))) / nrow(df), 4) * 100, "%")
+    df <- df[-unique(c(overlaps_left[, 1], overlaps_right[, 1])), ]
+
+    # 6. Output
+    return(df)
+}
