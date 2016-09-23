@@ -7,7 +7,7 @@ binary_phylip <- function(data, threshold = 5) {
         characters <- paste0(as.numeric(data[[name]] > threshold),
                              collapse = "")
         line <- stringr::str_c(name,
-                               stringi::stri_dup(" ", max_name_len + 2 - nchar(name)),
+                               stringi::stri_dup(" ", max(10, max_name_len + 1) - nchar(name)),
                                characters)
         lines[length(lines) + 1] <- line
     }
