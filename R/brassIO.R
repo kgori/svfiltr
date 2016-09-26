@@ -87,3 +87,38 @@ load_brass <- function(filename, header = FALSE) {
                             progress = T)
     as.data.frame(data)
 }
+
+#' Load a filtered data frame
+#' @export
+load_filtered <- function(filename) {
+    if (!file.exists(filename)) {
+        cat("File not found")
+        return()
+    }
+    conn <- file(filename)
+    open(conn)
+    line <- readLines(conn, 1)  # read first line
+    close(conn)
+
+    n_cols <- length(strsplit(line, "\t")[[1]])
+
+    coltypes <- readr::cols(readr::col_character(),
+                            readr::col_factor(c("+", "-")),
+                            readr::col_integer(),
+                            readr::col_integer(),
+                            readr::col_character(),
+                            readr::col_factor(c("+", "-")),
+                            readr::col_integer(),
+                            readr::col_integer())
+
+    for (i in 9:(n_cols-4)) {
+        coltypes[[1]][[i]] <- readr::col_integer()
+    }
+
+    coltypes[[1]][[n_cols-3]] <- readr::col_number()
+    coltypes[[1]][[n_cols-2]] <- readr::col_number()
+    coltypes[[1]][[n_cols-1]] <- readr::col_character()
+    coltypes[[1]][[n_cols]] <- readr::col_character()
+
+    as.data.frame(readr::read_tsv(filename, col_types = coltypes))
+}
