@@ -66,7 +66,7 @@ one_less_than <- function(df, threshold) {
 #' @param index The columns of the dataframe to operate on.
 #' @return TRUE or FALSE.
 #' @export
-estimate_boundaries <- function(df, index) {
+estimate_boundaries <- function(df, index, exclude_above = 300) {
     names <- colnames(df)[index]
     boundaries <- list()
 
@@ -74,7 +74,7 @@ estimate_boundaries <- function(df, index) {
         dat <- df[[names[i]]]
 
         # Ignore very high numbers of reads
-        dat <- dat[dat < 1000]
+        dat <- dat[dat < exclude_above]
 
         # Estimate cutoff with 2D kmeans
         cl <- kmeans(dat, centers = 2)
@@ -104,7 +104,7 @@ estimate_boundaries <- function(df, index) {
 #' @importFrom "stats" kmeans
 #' @export
 apply_boundaries <- function(df, boundaries, index, lower_grace = 0, upper_grace = 0) {
-    df[rowSums(df[, index] > (unlist(boundaries) - upper_grace) | df[, index] > lower_grace) == length(index), ]
+    df[rowSums(df[, index] > (unlist(boundaries) - upper_grace) | df[, index] <= lower_grace) == length(index), ]
 }
 
 
