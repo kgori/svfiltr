@@ -1,6 +1,10 @@
 # Returns a data frame from a brass bedpe output file.  Filters out commented lines and read ID columns
 #' @export
 load_brass <- function(filename, header = FALSE) {
+    if (!file.exists(filename)) {
+        stop("File not found")
+    }
+
     # 0. Preliminary file exam - see how many samples we've got
     GZIPPED <- FALSE
 
@@ -92,8 +96,7 @@ load_brass <- function(filename, header = FALSE) {
 #' @export
 load_filtered <- function(filename) {
     if (!file.exists(filename)) {
-        cat("File not found")
-        return()
+        stop("File not found")
     }
     conn <- file(filename)
     open(conn)

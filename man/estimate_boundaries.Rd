@@ -5,7 +5,7 @@
 \title{Attempt to find the boundary between noisy, low-coverage SVs
 and reliable high-coverage SVs}
 \usage{
-estimate_boundaries(df, index)
+estimate_boundaries(df, index, exclude_above = 300)
 }
 \arguments{
 \item{df}{A dataframe.}
