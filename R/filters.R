@@ -104,24 +104,36 @@ estimate_boundaries <- function(df, index, exclude_above = 300) {
 #' @importFrom "stats" kmeans
 #' @export
 apply_boundaries <- function(df, boundaries, index, lower_grace = 0, upper_grace = 0) {
-    df[rowSums(df[, index] > (unlist(boundaries) - upper_grace) | df[, index] <= lower_grace) == length(index), ]
+    # Upper condition matches samples with read coverage above the boundary,
+    # less the upper grace value
+    upper_condition <- df[, index] > (unlist(boundaries) - upper_grace)
+
+    # Lower condition matches samples with read coverage higher than the
+    # lower grace value
+    lower_condition <- df[, index] <= lower_grace
+
+    # Return df matching either upper or lower condition
+    df[rowSums(upper_condition | lower_condition) == length(index), ]
 }
 
 
 # Remove structural variants that self overlap
+#' @importFrom "GenomicRanges" GRanges
+#' @importFrom "IRanges" IRanges %outside%
+#' @importFrom "S4Vectors" Rle
 #' @export
 self_overlap <- function(df) {
     # 1. Make Granges objects of left and right
-    input_left_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 1]),
-                                                ranges = IRanges::IRanges(start = as.integer(df[, 3]),
-                                                                          end = as.integer(df[, 4])))
+    input_left_ranges <- GRanges(seqnames = S4Vectors::Rle(df[, 1]),
+                                 ranges = IRanges(start = as.integer(df[, 3]),
+                                                  end = as.integer(df[, 4])))
 
-    input_right_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 5]),
-                                                 ranges = IRanges::IRanges(start = as.integer(df[, 7]),
-                                                                           end = as.integer(df[, 8])))
+    input_right_ranges <- GRanges(seqnames = S4Vectors::Rle(df[, 5]),
+                                  ranges = IRanges(start = as.integer(df[, 7]),
+                                                   end = as.integer(df[, 8])))
 
     # 2. Pairwise overlap-testing
-    df <- df[IRanges::`%outside%`(input_left_ranges, input_right_ranges), ]
+    df <- df[input_left_ranges %outside% input_right_ranges, ]
 
     # 3. Output
     return(df)
@@ -129,17 +141,20 @@ self_overlap <- function(df) {
 
 #' @export
 #' @importFrom "utils" read.table
+#' @importFrom "GenomicRanges" GRanges
+#' @importFrom "IRanges" IRanges
+#' @importFrom "S4Vectors" Rle
 simple_repeats <- function(df, repeat_file){
     repeats <- read.table(repeat_file, header = F)
 
     # 1. Left Breakpoint
-    input_left_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 1]),
-                                                ranges = IRanges::IRanges(start = as.integer(df[, 3]),
-                                                                          end = as.integer(df[, 4])))
+    input_left_ranges <- GRanges(seqnames = Rle(df[, 1]),
+                                 ranges = IRanges(start = as.integer(df[, 3]),
+                                                  end = as.integer(df[, 4])))
 
-    repeat_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(repeats[, 1]),
-                                            ranges = IRanges::IRanges(start = as.integer(repeats[, 2]),
-                                                                      end = as.integer(repeats[, 3])))
+    repeat_ranges <- GRanges(seqnames = Rle(repeats[, 1]),
+                             ranges = IRanges(start = as.integer(repeats[, 2]),
+                                              end = as.integer(repeats[, 3])))
 
     # 2. Match with positions in Input
     overlaps_left <- IRanges::findOverlaps(input_left_ranges, repeat_ranges)
@@ -147,9 +162,9 @@ simple_repeats <- function(df, repeat_file){
     colnames(overlaps_left) <- c("Sets", "Repeats")
 
     # 3. Right Breakpoint
-    input_right_ranges <- GenomicRanges::GRanges(seqnames = S4Vectors::Rle(df[, 5]),
-                                                 ranges = IRanges::IRanges(start = as.integer(df[, 7]),
-                                                                           end = as.integer(df[, 8])))
+    input_right_ranges <- GRanges(seqnames = Rle(df[, 5]),
+                                  ranges = IRanges(start = as.integer(df[, 7]),
+                                                   end = as.integer(df[, 8])))
 
     # 4. Match with positions in Input
     overlaps_right <- IRanges::findOverlaps(input_right_ranges, repeat_ranges)
@@ -157,7 +172,9 @@ simple_repeats <- function(df, repeat_file){
     colnames(overlaps_right) <- c("Sets", "Repeats")
 
     # 5. Remove the ones which match
-    cat("\n Total removed: ", round(length(unique(c(overlaps_left[, 1], overlaps_right[, 1]))) / nrow(df), 4) * 100, "%")
+    # cat("\n Total removed: ",
+    #     round(length(unique(c(overlaps_left[, 1], overlaps_right[, 1]))) / nrow(df), 4) * 100,
+    #     "%")
     df <- df[-unique(c(overlaps_left[, 1], overlaps_right[, 1])), ]
 
     # 6. Output
