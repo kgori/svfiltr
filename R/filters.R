@@ -98,42 +98,15 @@ estimate_boundaries <- function(df, index) {
 #' @param df A dataframe
 #' @param boundaries Estimated boundaries from estimated_boundaries
 #' @param index Columns of df to examine
+#' @param lower_grace A 'grace' number of reads: below this many reads an SV is considered absent
+#' @param upper_grace A 'grace' number of reads: if an SV is this many reads below the boundary, it still counts as present
 #' @return Filtered dataframe
 #' @importFrom "stats" kmeans
 #' @export
-apply_boundaries <- function(df, boundaries, index) {
-    df[rowSums(df[, index] > unlist(boundaries) | df[, index] == 0) == length(index), ]
+apply_boundaries <- function(df, boundaries, index, lower_grace = 0, upper_grace = 0) {
+    df[rowSums(df[, index] > (unlist(boundaries) - upper_grace) | df[, index] > lower_grace) == length(index), ]
 }
 
-#' @importFrom "graphics" abline par text
-#' @export
-plot_hists <- function(df, index, mfrow = c(3, 4), boundaries = NULL, ...) {
-    names <- colnames(df)[index]
-    par(mfrow = mfrow)
-    for (i in 1:length(names)) {
-        dat <- df[[names[i]]]
-
-        # Ignore very high numbers of reads
-        dat <- dat[dat < 1000]
-
-        MASS::truehist(dat, main = names[i], xlab = "reads", ...)
-
-        if (!is.null(boundaries)) {
-            boundary <- boundaries[[names[i]]]
-
-            # Get size of current graphics to work out text offsets
-            curr_ymax <- par("usr")[4]
-            curr_xrange <- par("usr")[2] - par("usr")[1]
-
-            # Plot a vertical line at boundary, and add text label
-            abline(v = boundary, col = "red")
-            text(x = boundary + 0.1 * curr_xrange,
-                 y = curr_ymax * 0.9,
-                 col = "red",
-                 labels = paste("=", boundary, sep = ""))
-        }
-    }
-}
 
 # Remove structural variants that self overlap
 #' @export
@@ -189,4 +162,22 @@ simple_repeats <- function(df, repeat_file){
 
     # 6. Output
     return(df)
+}
+
+#' Retain SVs that span a distance greater than threshold
+#' @param df A dataframe
+#' @param threshold Breakpoints must be at least this far apart, or on different chromosomes
+#' @return A filtered dataframe
+#' @importFrom "GenomicRanges" GRanges
+#' @importFrom "IRanges" IRanges
+#' @export
+variant_distance <- function(df, threshold) {
+    left <- GRanges(seqnames = df[, 1],
+                    ranges = IRanges(start = as.integer(df[, 3]),
+                                     end = as.integer(df[, 4])))
+    right <- GRanges(seqnames = df[, 5],
+                     ranges = IRanges(start = as.integer(df[, 7]),
+                                      end = as.integer(df[, 8])))
+    distances <- GenomicRanges::distance(left, right)
+    df[which(distances > threshold | is.na(distances)), ]
 }
