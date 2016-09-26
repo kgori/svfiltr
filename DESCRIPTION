@@ -8,6 +8,7 @@ Description: Find tumour specific structural variants from a panel of matched tu
 License: MIT + file LICENSE
 LazyData: TRUE
 Imports:
+    circlize,
     GenomicRanges,
     IRanges,
     MASS,
