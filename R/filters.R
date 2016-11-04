@@ -118,25 +118,36 @@ apply_boundaries <- function(df, boundaries, index, lower_grace = 0, upper_grace
 
 
 # Remove structural variants that self overlap
-#' @importFrom "GenomicRanges" GRanges
-#' @importFrom "IRanges" IRanges %outside%
+#' @importFrom "GenomicRanges" GRanges findOverlaps
+#' @importFrom "IRanges" IRanges
 #' @importFrom "S4Vectors" Rle
 #' @export
-self_overlap <- function(df) {
-    # 1. Make Granges objects of left and right
-    input_left_ranges <- GRanges(seqnames = S4Vectors::Rle(df[, 1]),
-                                 ranges = IRanges(start = as.integer(df[, 3]),
-                                                  end = as.integer(df[, 4])))
+self_overlap <- function(BEDPE_Input){
+    # 1. Rename rows
+    rownames(BEDPE_Input) <- 1:nrow(BEDPE_Input)
 
-    input_right_ranges <- GRanges(seqnames = S4Vectors::Rle(df[, 5]),
-                                  ranges = IRanges(start = as.integer(df[, 7]),
-                                                   end = as.integer(df[, 8])))
+    # 2. Downsample set of candidates (depends on genomic names!)
+    BEDPE_Input.set <- BEDPE_Input[which(as.character(BEDPE_Input[,1])==as.character(BEDPE_Input[,5])),]
 
-    # 2. Pairwise overlap-testing
-    df <- df[input_left_ranges %outside% input_right_ranges, ]
+    # 3. Make Granges objects of left and right
+    Input.left.Ranges <- GRanges(seqnames = Rle(BEDPE_Input.set[,1]),
+                                 ranges = IRanges(start = as.integer(BEDPE_Input.set[,3]),
+                                                  end = as.integer(BEDPE_Input.set[,4])))
 
-    # 3. Output
-    return(df)
+    Input.right.Ranges <- GRanges(seqnames = Rle(BEDPE_Input.set[,5]),
+                                  ranges = IRanges(start = as.integer(BEDPE_Input.set[,7]),
+                                                   end = as.integer(BEDPE_Input.set[,8])))
+
+    # 4. Pairwise overlap-testing
+    OL <- findOverlaps(Input.left.Ranges,Input.right.Ranges)
+    OL <- as.matrix(OL)
+    OL <- OL[OL[,1]==OL[,2],]
+    BEDPE_Input.set <- BEDPE_Input.set[unique(OL[,1]),]
+
+    # 5. Output
+    cat("\n Total removed: ", round(length(as.numeric(rownames(BEDPE_Input.set)))/nrow(BEDPE_Input),4)*100, "%")
+    BEDPE_Input <- BEDPE_Input[-as.numeric(rownames(BEDPE_Input.set)),,drop=F]
+    return(BEDPE_Input)
 }
 
 #' @export
@@ -185,16 +196,25 @@ simple_repeats <- function(df, repeat_file){
 #' @param df A dataframe
 #' @param threshold Breakpoints must be at least this far apart, or on different chromosomes
 #' @return A filtered dataframe
+#' @export
+variant_distance <- function(df, threshold) {
+    distances <- breakpoint_span(df)
+    df[which(distances > threshold | is.na(distances)), ]
+}
+
+#' Calculate distance between left and right breakpoint
+#' @param df A dataframe
+#' @param threshold Breakpoints must be at least this far apart, or on different chromosomes
+#' @return Vector of distances. NA returned for interchromosomal breaks
 #' @importFrom "GenomicRanges" GRanges
 #' @importFrom "IRanges" IRanges
 #' @export
-variant_distance <- function(df, threshold) {
+breakpoint_span <- function(df) {
     left <- GRanges(seqnames = df[, 1],
                     ranges = IRanges(start = as.integer(df[, 3]),
                                      end = as.integer(df[, 4])))
     right <- GRanges(seqnames = df[, 5],
                      ranges = IRanges(start = as.integer(df[, 7]),
                                       end = as.integer(df[, 8])))
-    distances <- GenomicRanges::distance(left, right)
-    df[which(distances > threshold | is.na(distances)), ]
+    GenomicRanges::distance(left, right)
 }
