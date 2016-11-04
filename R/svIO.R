@@ -275,7 +275,8 @@ load_brass <- function(filename, header = FALSE) {
                             col_types = coltypes,
                             skip = headskipcount,
                             progress = TRUE)
-    as.data.frame(data[1:(nrow(data) - tailskipcount), ])
+    res <- as.data.frame(data[1:(nrow(data) - tailskipcount), ])
+    res[complete.cases(res),]
 }
 
 #' Load a filtered data frame
